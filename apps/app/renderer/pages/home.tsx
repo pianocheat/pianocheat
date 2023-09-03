@@ -13,7 +13,7 @@ function Home() {
         <p>
           ⚡ Electron + Next.js ⚡ -<Button variant="solid">Hello world</Button>
           <Link href="/next">
-            <a>Go to next page</a>
+            Go to next page
           </Link>
         </p>
         <img src="/images/logo.png" />

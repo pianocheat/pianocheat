@@ -12,7 +12,7 @@ function Next() {
         <p>
           ⚡ Electron + Next.js ⚡ -
           <Link href="/home">
-            <a>Go to home page</a>
+            Go to home page
           </Link>
         </p>
       </div>
