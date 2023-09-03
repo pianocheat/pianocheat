@@ -99,11 +99,29 @@ export default React.memo(function Measure(props: MeasureProps) {
 
           for (const _player of Object.keys(noteSets)) {
             const player = _player as Player
+            console.log('player:', player)
+            console.log('newMeasureNumber:', newMeasureNumber)
             const measureInfoForPlayer =
               cachedNoteSetsByMeasure[player][newMeasureNumber]
 
             console.log('measureInfoForPlayer:', measureInfoForPlayer)
-            const targetNoteSetTime = measureInfoForPlayer.noteSets[0].time
+
+            let targetNoteSetTime: number = 0
+            if (!measureInfoForPlayer) {
+              // First measure may only have right hand and no left hand
+              // And jumping is asking both hands to find first note for each hand
+              // Keep going until we find a measure that has something
+              for (let i = newMeasureNumber; i < 9999; i++) {
+                let scanNextMeasureInfoForPlayer =
+                  cachedNoteSetsByMeasure[player][newMeasureNumber]
+                if (scanNextMeasureInfoForPlayer) {
+                  targetNoteSetTime =
+                    scanNextMeasureInfoForPlayer.noteSets[0].time
+                }
+              }
+            } else {
+              targetNoteSetTime = measureInfoForPlayer.noteSets[0].time
+            }
 
             const noteSetTimesAsFloat = Object.keys(noteSets[player])
               .map((x) => parseFloat(x))

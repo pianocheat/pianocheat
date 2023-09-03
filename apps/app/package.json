@@ -1,6 +1,6 @@
 {
   "private": true,
-  "name": "my-nextron-app",
+  "name": "pianocheat",
   "description": "My application description",
   "version": "1.0.0",
   "author": "Yoshihide Shiono <shiono.yoshihide@gmail.com>",
@@ -11,23 +11,23 @@
     "postinstall": "electron-builder install-app-deps"
   },
   "dependencies": {
-    "@babel/runtime-corejs3": "^7.22.10",
+    "@babel/runtime-corejs3": "^7.22.11",
     "@emotion/react": "^11.11.1",
     "@emotion/styled": "^11.11.0",
     "@fontsource/inter": "^5.0.8",
-    "@mui/joy": "5.0.0-beta.2",
+    "@mui/joy": "5.0.0-beta.4",
     "electron-serve": "^1.1.0",
     "electron-store": "^8.1.0"
   },
   "devDependencies": {
-    "@types/node": "^18.11.18",
-    "@types/react": "^18.0.26",
-    "electron": "^21.3.3",
-    "electron-builder": "^23.6.0",
-    "next": "^12.3.4",
+    "@types/node": "^20.5.9",
+    "@types/react": "^18.2.21",
+    "electron": "*",
+    "electron-builder": "*",
+    "next": "^13.4.19",
     "nextron": "^8.5.0",
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
-    "typescript": "^4.9.4"
+    "react": "*",
+    "react-dom": "*",
+    "typescript": "*"
   }
 }

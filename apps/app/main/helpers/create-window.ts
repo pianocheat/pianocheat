@@ -2,11 +2,14 @@ import {
   screen,
   BrowserWindow,
   BrowserWindowConstructorOptions,
-} from 'electron';
-import Store from 'electron-store';
+} from "electron";
+import Store from "electron-store";
 
-export default (windowName: string, options: BrowserWindowConstructorOptions): BrowserWindow => {
-  const key = 'window-state';
+export default (
+  windowName: string,
+  options: BrowserWindowConstructorOptions
+): BrowserWindow => {
+  const key = "window-state";
   const name = `window-state-${windowName}`;
   const store = new Store({ name });
   const defaultSize = {
@@ -46,8 +49,8 @@ export default (windowName: string, options: BrowserWindowConstructorOptions): B
     });
   };
 
-  const ensureVisibleOnSomeDisplay = windowState => {
-    const visible = screen.getAllDisplays().some(display => {
+  const ensureVisibleOnSomeDisplay = (windowState) => {
+    const visible = screen.getAllDisplays().some((display) => {
       return windowWithinBounds(windowState, display.bounds);
     });
     if (!visible) {
@@ -70,6 +73,14 @@ export default (windowName: string, options: BrowserWindowConstructorOptions): B
   const browserOptions: BrowserWindowConstructorOptions = {
     ...state,
     ...options,
+    width: 1280,
+    height: 800,
+    useContentSize: true,
+    center: true,
+    title: "PianoCheat",
+    icon: "resources/icon.png",
+    autoHideMenuBar: true,
+    hasShadow: true,
     webPreferences: {
       nodeIntegration: true,
       contextIsolation: false,
@@ -78,7 +89,7 @@ export default (windowName: string, options: BrowserWindowConstructorOptions): B
   };
   win = new BrowserWindow(browserOptions);
 
-  win.on('close', saveState);
+  win.on("close", saveState);
 
   return win;
 };

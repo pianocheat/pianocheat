@@ -7,7 +7,7 @@ function Home() {
   return (
     <React.Fragment>
       <Head>
-        <title>Home - Nextron (with-typescript)</title>
+        <title>PianoCheat</title>
       </Head>
       <div>
         <p>

@@ -1,5 +1,19 @@
 # PianoCheat
 
+## Features & Notes
+
+-
+
+## Architecture
+
+- Input file support: MusicXML documents
+
+### Pipeline
+
+1. When a MusicXML document is provided, 
+
+## Development
+
 This Turborepo includes the following packages/apps:
 
 ### Apps and Packages
