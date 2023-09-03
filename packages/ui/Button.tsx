@@ -1,7 +1,7 @@
 "use client";
 
-import * as React from "react";
+import { Button as MuiButton } from "@mui/joy";
 
 export const Button = () => {
-  return <button onClick={() => alert("boop")}>Boop</button>;
+  return <MuiButton onClick={() => alert("boop")}>Boop</MuiButton>;
 };

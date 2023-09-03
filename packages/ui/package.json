@@ -5,8 +5,10 @@
   "types": "./index.tsx",
   "license": "MIT",
   "scripts": {
-    "lint": "eslint \"**/*.ts*\"",
-    "generate:component": "turbo gen react-component"
+    "lint": "eslint \"**/*.ts*\""
+  },
+  "dependencies": {
+    "@mui/joy": "5.0.0-beta.4"
   },
   "devDependencies": {
     "@types/react": "^18.2.21",
