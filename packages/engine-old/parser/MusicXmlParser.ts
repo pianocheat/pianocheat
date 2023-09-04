@@ -1,4 +1,4 @@
-import { RawScore, RawScoreObjectNode } from "../reader/MusicXmlReader.js";
+import { XmlDocument, XmlDocumentNode } from "../reader/MusicXmlReader.js";
 import {
   Attributes,
   Backup,
@@ -43,7 +43,7 @@ export interface MusicXmlParserWarning {
 export default class MusicXmlParser {
   private warnings: MusicXmlParserWarning[] = [];
 
-  constructor(private rawScore: RawScore) {}
+  constructor(private rawScore: XmlDocument) {}
 
   public parse(): ParsedScore {
     let parts: Part[] = [];
@@ -79,7 +79,7 @@ export default class MusicXmlParser {
     };
   }
 
-  private parsePartListNode(node: RawScoreObjectNode): Part[] {
+  private parsePartListNode(node: XmlDocumentNode): Part[] {
     const parts = [];
 
     for (const scorePartNode of node.children) {
@@ -124,13 +124,13 @@ export default class MusicXmlParser {
     return parts;
   }
 
-  private parsePartNode(node: RawScoreObjectNode): Measure[] {
+  private parsePartNode(node: XmlDocumentNode): Measure[] {
     return node.children.map((x) =>
-      this.parseMeasureNode(x as RawScoreObjectNode)
+      this.parseMeasureNode(x as XmlDocumentNode)
     );
   }
 
-  private parseMeasureNode(node: RawScoreObjectNode): Measure {
+  private parseMeasureNode(node: XmlDocumentNode): Measure {
     const _node: Partial<Measure> = {
       number: parseFloat(node.attributes?.number),
       children: [],
@@ -172,7 +172,7 @@ export default class MusicXmlParser {
     return _node as Measure;
   }
 
-  private parseNoteNode(node: RawScoreObjectNode): ParsedNote {
+  private parseNoteNode(node: XmlDocumentNode): ParsedNote {
     let note: Partial<ParsedNote> = {
       kind: "note",
     };
@@ -243,15 +243,15 @@ export default class MusicXmlParser {
     return note as ParsedNote;
   }
 
-  private parseBackupNode(node: RawScoreObjectNode): Backup {
+  private parseBackupNode(node: XmlDocumentNode): Backup {
     return this.getSimpleNodesAsObject(node.children, "backup");
   }
 
-  private parseForwardNode(node: RawScoreObjectNode): Forward {
+  private parseForwardNode(node: XmlDocumentNode): Forward {
     return this.getSimpleNodesAsObject(node.children, "forward");
   }
 
-  private parseAttributesNode(node: RawScoreObjectNode): Attributes {
+  private parseAttributesNode(node: XmlDocumentNode): Attributes {
     let _node: Attributes = {
       kind: "attributes",
     };

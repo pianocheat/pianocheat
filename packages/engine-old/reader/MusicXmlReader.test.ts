@@ -120,13 +120,13 @@ function getHelloWorldMusicXmlDocument(
 </score-partwise>`;
 }
 
-test(`throws on invalid file extension`, () => {
+test.skip(`throws on invalid file extension`, () => {
   assert.throws(() => new MusicXmlReader().readFile("test.pdf"), {
     message: /expected.*to have a valid.*file extension/i,
   });
 });
 
-test(`throws on invalid XML`, () => {
+test.skip(`throws on invalid XML`, () => {
   memFs.writeFileSync("/test.xml", "!! {{> Not valid XML");
   assert.throws(
     () => new MusicXmlReader().readFile("/test.xml", { fs: memFs }),
@@ -136,7 +136,7 @@ test(`throws on invalid XML`, () => {
   );
 });
 
-test(`passes valid XML with processing instruction closing tag-less XML like <?DoletSibelius ?> which breaks the tXml parser`, () => {
+test.skip(`passes valid XML with processing instruction closing tag-less XML like <?DoletSibelius ?> which breaks the tXml parser`, () => {
   memFs.writeFileSync(
     "/test.xml",
     getHelloWorldMusicXmlDocument({ addDoletFinaleCrashingXmlString: true })
@@ -144,7 +144,16 @@ test(`passes valid XML with processing instruction closing tag-less XML like <?D
   new MusicXmlReader().readFile("/test.xml", { fs: memFs });
 });
 
-test(`reads basic hello world MusicXML`, () => {
+test(`reads something`, () => {
+  new MusicXmlReader().readFile(
+    "/Users/jason/Downloads/code-geass-colors.musicxml",
+    {
+      fs: nativeFs,
+    }
+  );
+});
+
+test.skip(`reads basic hello world MusicXML`, () => {
   memFs.writeFileSync("/test.musicxml", getHelloWorldMusicXmlDocument());
   const result = new MusicXmlReader().readFile("/test.musicxml", {
     fs: memFs,

@@ -8,25 +8,15 @@
   "types": "./index.ts",
   "type": "module",
   "license": "MIT",
-  "ava": {
-    "typescript": {
-      "rewritePaths": {
-        "src/": "./"
-      },
-      "compile": false
-    }
-  },
   "scripts": {
     "test.build": "rm -rf ./build && $(pnpm bin)/tsc --project ./tsconfig.test.json --watch",
-    "test.run": "ava ./build/*.test.js --watch",
+    "test.run": "node --test --watch ./build/**/*.test.js",
     "lint": "eslint \"**/*.ts*\""
   },
   "devDependencies": {
-    "@ava/typescript": "^4.1.0",
     "@types/humps": "^2.0.3",
     "@types/node": "^20.5.9",
     "@types/require-dir": "^1.0.2",
-    "ava": "^5.3.1",
     "eslint": "^8.48.0",
     "eslint-config-custom": "workspace:*",
     "glob": "^10.3.4",
