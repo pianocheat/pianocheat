@@ -65,6 +65,8 @@ export function readMusicXmlMeasure(elements: PreProcessedXmlReaderElement[]) {
             case "beam":
             case "stem":
             case "staff":
+            case "tuplet":
+            case "slur":
             case "type":
             case "articulations":
             case "ornaments":
