@@ -18,7 +18,7 @@
   },
   "scripts": {
     "test.build": "rm -rf ./build && $(pnpm bin)/tsc --project ./tsconfig.test.json --watch",
-    "test.run": "ava ./build/*.test.js --watch",
+    "test.run": "ava ./build/MusicXmlDocumentReader.test.js --watch",
     "lint": "eslint \"**/*.ts*\""
   },
   "devDependencies": {

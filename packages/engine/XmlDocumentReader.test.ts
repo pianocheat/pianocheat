@@ -1,40 +1,6 @@
 import test from "ava";
-import assert from "assert";
+import { upperCaseFirstLetter } from "./Utils.js";
 import { getNextXmlElement } from "./XmlDocumentReader.js";
-
-const xmlDocument = `
-<part id="P1">
-  <measure number="1">
-    <barline location="left">
-      <bar-style>heavy-light</bar-style>
-      <repeat direction="forward"/>
-    </barline>
-    <attributes>
-      <divisions>1</divisions>
-      <key>
-        <fifths>0</fifths>
-      </key>
-      <clef>
-        <sign>G</sign>
-        <line>2</line>
-      </clef>
-    </attributes>
-    <sound dynamics="83">
-      <?DoletFinale Unknown text expression 5 associated with t
-      t expression 5 associated with this sound at
-      part P1, measure X8, edu 0?>
-    </sound>
-    <note>
-      <pitch>
-        <step>C</step>
-        <octave>4</octave>
-      </pitch>
-      <duration>4</duration>
-      <voice>1</voice>
-      <type>whole</type>
-    </note>
-  </measure>
-</part>`;
 
 test(`getNextXmlElement() > should return null for an empty string`, (t) => {
   t.is(getNextXmlElement({ xml: "", startingIndex: 0 }), null);

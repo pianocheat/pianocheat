@@ -1,3 +1,6 @@
+import test from "ava";
+import { upperCaseFirstLetter } from "./Utils.js";
+
 interface GetNextXmlElementParams {
   /**
    * The XML document string to search in. The starting search index can be specified by the `startingIndex` parameter.
@@ -39,13 +42,13 @@ const CharCodeEquals = "=".charCodeAt(0);
 const CharCodeSpace = " ".charCodeAt(0);
 const CharCodeLineBreak = 10;
 
-export function isCharCodeLetter(charCode: number) {
+function isCharCodeLetter(charCode: number) {
   return (
     (charCode >= 65 && charCode <= 90) || (charCode >= 97 && charCode <= 122)
   );
 }
 
-export function indexOfNextNonSelfClosingTag(
+function indexOfNextNonSelfClosingTag(
   text: string,
   startingIndex: number,
   endingIndex: number
@@ -68,7 +71,7 @@ export function indexOfNextNonSelfClosingTag(
   return -1;
 }
 
-export function indexOfNextOpenOrCloseTag(text: string, startingIndex: number) {
+function indexOfNextOpenOrCloseTag(text: string, startingIndex: number) {
   for (let needle = startingIndex; needle < text.length; needle++) {
     let charCode = text.charCodeAt(needle);
 
@@ -88,7 +91,7 @@ export function indexOfNextOpenOrCloseTag(text: string, startingIndex: number) {
   return -1;
 }
 
-export function indexOfNextOpenTag(text: string, startingIndex: number) {
+function indexOfNextOpenTag(text: string, startingIndex: number) {
   for (let needle = startingIndex; needle < text.length; needle++) {
     let charCode = text.charCodeAt(needle);
 
@@ -107,7 +110,7 @@ export function indexOfNextOpenTag(text: string, startingIndex: number) {
   return -1;
 }
 
-export function skipWhiteSpaceCharacters(text: string, startingIndex: number) {
+function skipWhiteSpaceCharacters(text: string, startingIndex: number) {
   let needle = startingIndex;
 
   for (; needle < text.length; needle++) {
@@ -123,10 +126,7 @@ export function skipWhiteSpaceCharacters(text: string, startingIndex: number) {
   return needle;
 }
 
-export function readUntilSingleOrDoubleQuote(
-  text: string,
-  startingIndex: number
-) {
+function readUntilSingleOrDoubleQuote(text: string, startingIndex: number) {
   let needle = startingIndex;
 
   for (; needle < text.length; needle++) {
@@ -142,7 +142,7 @@ export function readUntilSingleOrDoubleQuote(
   return needle;
 }
 
-export function readNextLetters(text: string, startingIndex: number) {
+function readNextLetters(text: string, startingIndex: number) {
   for (let needle = startingIndex; needle < text.length; needle++) {
     let charCode = text.charCodeAt(needle);
 
@@ -162,7 +162,7 @@ export function readNextLetters(text: string, startingIndex: number) {
   };
 }
 
-type XmlReaderElementResult = {
+export type XmlReaderElementResult = {
   tag: string;
   type: "open" | "close" | "open-close";
   value?: XmlDocumentElementAttributeValue;
@@ -403,4 +403,76 @@ export function getNextXmlElement({
   return retValue;
 }
 
-export function readXmlDocument(contents: string) {}
+/* ------------- Public Methods --------------- */
+
+export type PreProcessedXmlReaderElement = {
+  tag: string;
+  type: "open" | "close" | "open-close";
+  value?: XmlDocumentElementAttributeValue;
+  attributes?: Record<string, XmlDocumentElementAttributeValue>;
+};
+
+export function readXmlDocument(contents: string) {
+  function readAllXmlElements(): XmlReaderElementResult[] {
+    let xmlElements: XmlReaderElementResult[] = [];
+    let currentXmlElement;
+    let idx = contents.indexOf("<measure");
+    while (
+      (currentXmlElement = getNextXmlElement({
+        xml: contents,
+        startingIndex: idx,
+      }))
+    ) {
+      xmlElements.push(currentXmlElement);
+      idx = currentXmlElement.endingIndex;
+    }
+    return xmlElements;
+  }
+
+  function preProcessXmlElements(
+    rawXmlElements: XmlReaderElementResult[]
+  ): PreProcessedXmlReaderElement[] {
+    const preProcessedElements: PreProcessedXmlReaderElement[] = [];
+
+    for (let needle = 0; needle < rawXmlElements.length; needle++) {
+      const currentElement = rawXmlElements[needle];
+      const nextElement = rawXmlElements[needle + 1];
+
+      if (currentElement.tag === "rest") {
+        currentElement.type = "open-close";
+      }
+      const isCurrentAndNextElementOpenCloseTag =
+        currentElement.tag === nextElement?.tag &&
+        currentElement.type === "open" &&
+        nextElement?.type === "close";
+
+      if (isCurrentAndNextElementOpenCloseTag) {
+        const result: PreProcessedXmlReaderElement = {
+          tag: currentElement.tag,
+          type: "open-close",
+        };
+        if (currentElement.attributes) {
+          result.attributes = currentElement.attributes;
+        }
+        if (currentElement.value) {
+          result.value = currentElement.value;
+        }
+        preProcessedElements.push(result);
+        needle += 1;
+      } else {
+        const preProcessedCurrentElement: PreProcessedXmlReaderElement =
+          currentElement;
+        delete (preProcessedCurrentElement as any).endingIndex;
+        preProcessedElements.push(preProcessedCurrentElement);
+      }
+    }
+
+    return preProcessedElements;
+  }
+
+  const elements: PreProcessedXmlReaderElement[] = preProcessXmlElements(
+    readAllXmlElements()
+  );
+
+  return elements;
+}

@@ -5,3 +5,7 @@ export function withNormalizedWhitespace(text: string) {
     .replace(/\> +\</g, "><")
     .trim();
 }
+
+export function upperCaseFirstLetter(text: string) {
+  return `${text[0].toUpperCase()}${text.slice(1)}`;
+}
