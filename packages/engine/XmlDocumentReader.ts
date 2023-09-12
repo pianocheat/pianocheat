@@ -45,6 +45,29 @@ export function isCharCodeLetter(charCode: number) {
   );
 }
 
+export function indexOfNextNonSelfClosingTag(
+  text: string,
+  startingIndex: number,
+  endingIndex: number
+) {
+  for (let needle = startingIndex; needle < endingIndex; needle++) {
+    let charCode = text.charCodeAt(needle);
+
+    if (charCode !== CharCodeLeftArrow) {
+      continue;
+    } // We've found our '<' open tag
+
+    const nextCharCode = text.charCodeAt(needle + 1);
+    const isForwardSlash = nextCharCode === CharCodeForwardSlash;
+
+    if (isForwardSlash) {
+      return needle;
+    }
+  }
+
+  return -1;
+}
+
 export function indexOfNextOpenTag(text: string, startingIndex: number) {
   for (let needle = startingIndex; needle < text.length; needle++) {
     let charCode = text.charCodeAt(needle);
@@ -123,7 +146,12 @@ export function getNextXmlElement({
   xml,
   startingIndex,
   debug,
-}: GetNextXmlElementParams) {
+}: GetNextXmlElementParams): null | {
+  tag: string;
+  value: null | XmlDocumentElementAttributeValue;
+  attributes: Record<string, XmlDocumentElementAttributeValue>;
+  endingIndex: number;
+} {
   if (debug) {
     console.log(
       `[getNextXmlElement()] 1. Debugging XML of length ${
@@ -217,7 +245,7 @@ export function getNextXmlElement({
     const afterOpenQuoteIdx = afterAttributeEqualsSignIdx + 1; // + 1 to skip opening quote
     const endQuoteIdx = readUntilSingleOrDoubleQuote(xml, afterOpenQuoteIdx);
     const attributeValue = xml.slice(afterOpenQuoteIdx, endQuoteIdx);
-    const attributeValueAsNumber = parseFloat(attributeValue);
+    const attributeValueAsNumber = Number(attributeValue);
     attributes[attributeName] = Number.isNaN(attributeValueAsNumber)
       ? attributeValue
       : attributeValueAsNumber;
@@ -252,12 +280,67 @@ export function getNextXmlElement({
         )}`
       );
     }
-    const isClosingXmlElement = // > or />
-      xml.charCodeAt(needle) === CharCodeRightArrow ||
-      (xml.charCodeAt(needle) === CharCodeForwardSlash &&
-        xml.charCodeAt(needle + 1) === CharCodeRightArrow);
-    if (isClosingXmlElement) {
+
+    // Found />
+    const isSelfClosingXmlElement =
+      xml.charCodeAt(needle) === CharCodeForwardSlash &&
+      xml.charCodeAt(needle + 1) === CharCodeRightArrow;
+    // Found >
+    const isNonSelfClosingXmlElement =
+      xml.charCodeAt(needle) === CharCodeRightArrow;
+    if (isSelfClosingXmlElement || isNonSelfClosingXmlElement) {
       break;
+    }
+  }
+
+  const isNonSelfClosingXmlElement =
+    xml.charCodeAt(needle) === CharCodeRightArrow;
+  let value = null;
+  if (isNonSelfClosingXmlElement) {
+    // Get the child value
+
+    // But only if this tag has a simple/short child value and not nested XML elements
+
+    const beginningOfChildValueIdx = needle + 1;
+
+    const _nextOpenTagIdx = indexOfNextOpenTag(xml, beginningOfChildValueIdx);
+    const _nextNonSelfClosingTagIdx = indexOfNextNonSelfClosingTag(
+      xml,
+      beginningOfChildValueIdx,
+      _nextOpenTagIdx === -1 ? xml.length : _nextOpenTagIdx + 1 // limit search to at most the next <tag otherwise our search will be inefficient and scan the whole document many times
+    );
+
+    const hasComplexNestedXmlElementsForChildren =
+      _nextNonSelfClosingTagIdx === -1 ||
+      (_nextOpenTagIdx !== -1 && _nextNonSelfClosingTagIdx > _nextOpenTagIdx);
+
+    if (debug) {
+      console.log(
+        `[getNextXmlElement()] 8. hasComplexNestedXmlElementsForChildren block: ${JSON.stringify(
+          {
+            xml,
+            _nextOpenTagIdx,
+            _nextNonSelfClosingTagIdx,
+            hasComplexNestedXmlElementsForChildren,
+          },
+          null,
+          4
+        )}`
+      );
+    }
+
+    if (!hasComplexNestedXmlElementsForChildren) {
+      const endOfChildValueIdx = indexOfNextNonSelfClosingTag(
+        xml,
+        beginningOfChildValueIdx,
+        xml.length
+      );
+      const valueAsString = xml.slice(
+        beginningOfChildValueIdx,
+        endOfChildValueIdx
+      );
+      const valueAsNumber = Number(valueAsString);
+      value = Number.isNaN(valueAsNumber) ? valueAsString : valueAsNumber;
     }
   }
 
@@ -267,6 +350,8 @@ export function getNextXmlElement({
 
   return {
     tag: tagName,
+    value,
     attributes,
+    endingIndex: needle,
   };
 }
