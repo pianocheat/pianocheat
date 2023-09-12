@@ -1,6 +1,6 @@
 import test from "ava";
 import assert from "assert";
-import { getMeasureXml } from "./MusicXmlDocumentReader.js";
+import { findNextMusicXmlDocumentMeasure } from "./MusicXmlDocumentReader.js";
 import { readFileSync } from "fs";
 
 function withNormalizedWhitespace(text: string) {
@@ -75,14 +75,14 @@ test(`getMeasureXml() > `, (t) => {
       </measure>`);
 
   const { text: measure1Text, endingMatchIndex: measure1EndingMatchIndex } =
-    getMeasureXml(documentContents, 0);
+    findNextMusicXmlDocumentMeasure(documentContents, 0);
   t.deepEqual(withNormalizedWhitespace(measure1Text), expectedMeasure1Text);
 
   const { text: measure2Text, endingMatchIndex: measure2EndingMatchIndex } =
-    getMeasureXml(documentContents, measure1EndingMatchIndex);
+    findNextMusicXmlDocumentMeasure(documentContents, measure1EndingMatchIndex);
   t.deepEqual(withNormalizedWhitespace(measure2Text), expectedMeasure2Text);
 
-  const { text: measure3Text } = getMeasureXml(
+  const { text: measure3Text } = findNextMusicXmlDocumentMeasure(
     documentContents,
     measure2EndingMatchIndex
   );

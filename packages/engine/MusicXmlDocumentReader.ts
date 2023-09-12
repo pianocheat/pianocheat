@@ -58,7 +58,19 @@ export function readMusicXmlDocument(contents: string) {
   } while (true);
 }
 
-export function getMeasureXml(contents: string, startIndex: number) {
+interface MusicXmlDocumentMeasureSearchResult {
+  found: boolean;
+  text: string;
+  startingMatchIndex: number;
+  endingMatchIndex: number;
+  searchString: string;
+  startingSearchIndex: number;
+}
+
+export function findNextMusicXmlDocumentMeasure(
+  contents: string,
+  startIndex: number
+): MusicXmlDocumentMeasureSearchResult {
   let startMeasureTagIdx = contents.indexOf(
     Strings.StartMeasureTag,
     startIndex
