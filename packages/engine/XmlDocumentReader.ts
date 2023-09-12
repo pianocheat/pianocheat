@@ -68,6 +68,26 @@ export function indexOfNextNonSelfClosingTag(
   return -1;
 }
 
+export function indexOfNextOpenOrCloseTag(text: string, startingIndex: number) {
+  for (let needle = startingIndex; needle < text.length; needle++) {
+    let charCode = text.charCodeAt(needle);
+
+    if (charCode !== CharCodeLeftArrow) {
+      continue;
+    } // We've found our '<' open tag
+
+    const nextCharCode = text.charCodeAt(needle + 1);
+    const isOpenTag = isCharCodeLetter(nextCharCode);
+    const isCloseTag = nextCharCode === CharCodeForwardSlash;
+
+    if (isOpenTag || isCloseTag) {
+      return needle;
+    }
+  }
+
+  return -1;
+}
+
 export function indexOfNextOpenTag(text: string, startingIndex: number) {
   for (let needle = startingIndex; needle < text.length; needle++) {
     let charCode = text.charCodeAt(needle);
@@ -142,16 +162,19 @@ export function readNextLetters(text: string, startingIndex: number) {
   };
 }
 
+type XmlReaderElementResult = {
+  tag: string;
+  type: "open" | "close" | "open-close";
+  value?: XmlDocumentElementAttributeValue;
+  attributes?: Record<string, XmlDocumentElementAttributeValue>;
+  endingIndex: number;
+};
+
 export function getNextXmlElement({
   xml,
   startingIndex,
   debug,
-}: GetNextXmlElementParams): null | {
-  tag: string;
-  value: null | XmlDocumentElementAttributeValue;
-  attributes: Record<string, XmlDocumentElementAttributeValue>;
-  endingIndex: number;
-} {
+}: GetNextXmlElementParams): null | XmlReaderElementResult {
   if (debug) {
     console.log(
       `[getNextXmlElement()] 1. Debugging XML of length ${
@@ -170,21 +193,37 @@ export function getNextXmlElement({
     );
   }
 
-  const nextOpenTagIdx = indexOfNextOpenTag(xml, postWhiteSpaceIdx);
+  const nextOpenOrCloseTagIdx = indexOfNextOpenOrCloseTag(
+    xml,
+    postWhiteSpaceIdx
+  );
   if (debug) {
     console.log(
       `[getNextXmlElement()] 3. ${
-        nextOpenTagIdx - postWhiteSpaceIdx
-      } characters later, found the next open tag index at ${nextOpenTagIdx}. XML is now '${xml.slice(
-        nextOpenTagIdx
+        nextOpenOrCloseTagIdx - postWhiteSpaceIdx
+      } characters later, found the next open/close tag index at ${nextOpenOrCloseTagIdx}. XML is now '${xml.slice(
+        nextOpenOrCloseTagIdx
       )}'.`
     );
   }
 
+  const isClosingTagType =
+    xml.charCodeAt(nextOpenOrCloseTagIdx + 1) === CharCodeForwardSlash;
+
   const { endingIndex: tagNameEndingIndex, letters: tagName } = readNextLetters(
     xml,
-    nextOpenTagIdx + 1 // Skip the actual '<' open tag character
+    isClosingTagType
+      ? nextOpenOrCloseTagIdx + 2 // Skip the actual '</' close tag characters
+      : nextOpenOrCloseTagIdx + 1 // Skip the actual '<' open tag character
   );
+
+  if (isClosingTagType) {
+    return {
+      tag: tagName,
+      type: "close",
+      endingIndex: tagNameEndingIndex,
+    };
+  }
 
   if (debug) {
     console.log(`[getNextXmlElement()] 4. Read tag name '${tagName}'.`);
@@ -198,6 +237,7 @@ export function getNextXmlElement({
   const attributes: Record<string, XmlDocumentElementAttributeValue> = {};
 
   let needle = postTagNameAndWhiteSpaceIndex;
+  let isSelfClosingXmlElement;
   while (isCharCodeLetter(xml.charCodeAt(needle))) {
     const { endingIndex: attributeNameEndingIndex, letters: attributeName } =
       readNextLetters(xml, needle);
@@ -282,7 +322,7 @@ export function getNextXmlElement({
     }
 
     // Found />
-    const isSelfClosingXmlElement =
+    isSelfClosingXmlElement =
       xml.charCodeAt(needle) === CharCodeForwardSlash &&
       xml.charCodeAt(needle + 1) === CharCodeRightArrow;
     // Found >
@@ -295,7 +335,7 @@ export function getNextXmlElement({
 
   const isNonSelfClosingXmlElement =
     xml.charCodeAt(needle) === CharCodeRightArrow;
-  let value = null;
+  let value;
   if (isNonSelfClosingXmlElement) {
     // Get the child value
 
@@ -348,10 +388,19 @@ export function getNextXmlElement({
     return null;
   }
 
-  return {
+  const retValue: XmlReaderElementResult = {
     tag: tagName,
-    value,
-    attributes,
+    type: isSelfClosingXmlElement ? "open-close" : "open",
     endingIndex: needle,
   };
+
+  if (value) {
+    retValue.value = value;
+  }
+  if (Object.keys(attributes).length !== 0) {
+    retValue.attributes = attributes;
+  }
+  return retValue;
 }
+
+export function readXmlDocument(contents: string) {}

@@ -47,7 +47,7 @@ test(`getNextXmlElement() > should return null for invalid XML with a space betw
 test(`getNextXmlElement() > should return tag`, (t) => {
   t.like(
     getNextXmlElement({ debug: false, xml: "   <tag >", startingIndex: 0 }),
-    { tag: "tag", attributes: {} }
+    { tag: "tag" }
   );
 });
 
@@ -92,7 +92,7 @@ test(`getNextXmlElement() > should handle simple self-closing tag, no spaces`, (
           <tag/>`,
       startingIndex: 0,
     }),
-    { tag: "tag", attributes: {} }
+    { tag: "tag" }
   );
 });
 
@@ -105,7 +105,7 @@ test(`getNextXmlElement() > should handle simple self-closing tag, whitespaces b
             />`,
       startingIndex: 0,
     }),
-    { tag: "tag", attributes: {} }
+    { tag: "tag" }
   );
 });
 
@@ -145,7 +145,7 @@ test(`getNextXmlElement() > should get child values`, (t) => {
       xml: `<tag>123</tag>`,
       startingIndex: 0,
     }),
-    { tag: "tag", attributes: {}, value: 123 }
+    { tag: "tag", value: 123 }
   );
 });
 
@@ -156,11 +156,11 @@ test(`getNextXmlElement() > should get child values with spaces`, (t) => {
       xml: `<tag>  123 a</tag>`,
       startingIndex: 0,
     }),
-    { tag: "tag", attributes: {}, value: "  123 a" }
+    { tag: "tag", value: "  123 a" }
   );
 });
 
-test(`getNextXmlElement() > should parse XML document elements with their attributes`, (t) => {
+test(`getNextXmlElement() > should break down a complete XMl document line-by-line`, (t) => {
   const xmlDocument = `
 <part id="P1">
   <measure number="1">
@@ -216,50 +216,94 @@ test(`getNextXmlElement() > should parse XML document elements with their attrib
       startingIndex: needle,
     }))
   ) {
-    elements.push({
-      tag: element.tag,
-      attributes: element.attributes,
-      value: element.value,
-    });
+    elements.push(element);
     needle = element.endingIndex;
   }
 
   t.like(elements, [
-    { tag: "part", attributes: { id: "P1" }, value: null },
-    { tag: "measure", attributes: { number: 1 }, value: null },
-    { tag: "barline", attributes: { location: "left" }, value: null },
-    { tag: "bar", attributes: {}, value: null },
-    { tag: "repeat", attributes: { direction: "forward" }, value: null },
-    { tag: "attributes", attributes: {}, value: null },
-    { tag: "divisions", attributes: {}, value: 1 },
-    { tag: "key", attributes: {}, value: null },
-    { tag: "fifths", attributes: {}, value: 0 },
-    { tag: "clef", attributes: {}, value: null },
-    { tag: "sign", attributes: {}, value: "G" },
-    { tag: "line", attributes: {}, value: 2 },
+    {
+      tag: "part",
+      type: "open",
+      endingIndex: 14,
+      attributes: { id: "P1" },
+    },
+    {
+      tag: "measure",
+      type: "open",
+      endingIndex: 37,
+      attributes: { number: 1 },
+    },
+    {
+      tag: "barline",
+      type: "open",
+      endingIndex: 67,
+      attributes: { location: "left" },
+    },
+    { tag: "bar", type: "open", endingIndex: 79 },
+    { tag: "bar", type: "close", endingIndex: 102 },
+    {
+      tag: "repeat",
+      type: "open-close",
+      endingIndex: 143,
+      attributes: { direction: "forward" },
+    },
+    { tag: "barline", type: "close", endingIndex: 159 },
+    { tag: "attributes", type: "open", endingIndex: 176 },
+    { tag: "divisions", type: "open", endingIndex: 194, value: 1 },
+    { tag: "divisions", type: "close", endingIndex: 207 },
+    { tag: "key", type: "open", endingIndex: 219 },
+    { tag: "fifths", type: "open", endingIndex: 236 },
+    { tag: "fifths", type: "close", endingIndex: 246 },
+    { tag: "key", type: "close", endingIndex: 259 },
+    { tag: "clef", type: "open", endingIndex: 272 },
+    { tag: "sign", type: "open", endingIndex: 287, value: "G" },
+    { tag: "sign", type: "close", endingIndex: 295 },
+    { tag: "line", type: "open", endingIndex: 310, value: 2 },
+    { tag: "line", type: "close", endingIndex: 318 },
+    { tag: "clef", type: "close", endingIndex: 332 },
+    { tag: "attributes", type: "close", endingIndex: 350 },
     {
       tag: "sound",
-      attributes: { dynamics: 83 },
+      type: "open",
+      endingIndex: 376,
       value:
         "\n" +
         "      <?DoletFinale Unknown text expression 5 associated with t\n" +
         "      t expression 5 associated with this sound at\n" +
         "      part P1, measure X8, edu 0?>\n" +
         "    ",
+      attributes: { dynamics: 83 },
     },
-    { tag: "note", attributes: {}, value: null },
-    { tag: "pitch", attributes: {}, value: null },
-    { tag: "step", attributes: {}, value: "C" },
-    { tag: "octave", attributes: {}, value: 4 },
-    { tag: "duration", attributes: {}, value: 4 },
-    { tag: "voice", attributes: {}, value: 1 },
-    { tag: "type", attributes: {}, value: "whole" },
-    { tag: "note", attributes: {}, value: null },
-    { tag: "pitch", attributes: {}, value: null },
-    { tag: "step", attributes: {}, value: "D" },
-    { tag: "octave", attributes: {}, value: 5 },
-    { tag: "duration", attributes: {}, value: 4 },
-    { tag: "voice", attributes: {}, value: 1 },
-    { tag: "type", attributes: {}, value: "whole" },
+    { tag: "sound", type: "close", endingIndex: 539 },
+    { tag: "note", type: "open", endingIndex: 550 },
+    { tag: "pitch", type: "open", endingIndex: 564 },
+    { tag: "step", type: "open", endingIndex: 579, value: "C" },
+    { tag: "step", type: "close", endingIndex: 587 },
+    { tag: "octave", type: "open", endingIndex: 604, value: 4 },
+    { tag: "octave", type: "close", endingIndex: 614 },
+    { tag: "pitch", type: "close", endingIndex: 629 },
+    { tag: "duration", type: "open", endingIndex: 646, value: 4 },
+    { tag: "duration", type: "close", endingIndex: 658 },
+    { tag: "voice", type: "open", endingIndex: 672, value: 1 },
+    { tag: "voice", type: "close", endingIndex: 681 },
+    { tag: "type", type: "open", endingIndex: 694, value: "whole" },
+    { tag: "type", type: "close", endingIndex: 706 },
+    { tag: "note", type: "close", endingIndex: 718 },
+    { tag: "note", type: "open", endingIndex: 729 },
+    { tag: "pitch", type: "open", endingIndex: 743 },
+    { tag: "step", type: "open", endingIndex: 758, value: "D" },
+    { tag: "step", type: "close", endingIndex: 766 },
+    { tag: "octave", type: "open", endingIndex: 783, value: 5 },
+    { tag: "octave", type: "close", endingIndex: 793 },
+    { tag: "pitch", type: "close", endingIndex: 808 },
+    { tag: "duration", type: "open", endingIndex: 825, value: 4 },
+    { tag: "duration", type: "close", endingIndex: 837 },
+    { tag: "voice", type: "open", endingIndex: 851, value: 1 },
+    { tag: "voice", type: "close", endingIndex: 860 },
+    { tag: "type", type: "open", endingIndex: 873, value: "whole" },
+    { tag: "type", type: "close", endingIndex: 885 },
+    { tag: "note", type: "close", endingIndex: 897 },
+    { tag: "measure", type: "close", endingIndex: 910 },
+    { tag: "part", type: "close", endingIndex: 918 },
   ]);
 });
