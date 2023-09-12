@@ -1,5 +1,5 @@
 import test from "ava";
-import { upperCaseFirstLetter } from "./Utils.js";
+import { upperCaseFirstLetter, camelize } from "./Utils.js";
 
 interface GetNextXmlElementParams {
   /**
@@ -36,15 +36,18 @@ const CharCodeLeftArrow = "<".charCodeAt(0);
 const CharCodeRightArrow = ">".charCodeAt(0);
 const CharCodeForwardSlash = "/".charCodeAt(0);
 const CharCodeExclamation = "!".charCodeAt(0);
+const CharCodeDash = "-".charCodeAt(0);
 const CharCodeSingleQuote = "'".charCodeAt(0);
 const CharCodeDoubleQuote = '"'.charCodeAt(0);
 const CharCodeEquals = "=".charCodeAt(0);
 const CharCodeSpace = " ".charCodeAt(0);
 const CharCodeLineBreak = 10;
 
-function isCharCodeLetter(charCode: number) {
+function isCharCodeValidTagName(charCode: number) {
   return (
-    (charCode >= 65 && charCode <= 90) || (charCode >= 97 && charCode <= 122)
+    (charCode >= 65 && charCode <= 90) ||
+    (charCode >= 97 && charCode <= 122) ||
+    charCode === CharCodeDash
   );
 }
 
@@ -80,7 +83,7 @@ function indexOfNextOpenOrCloseTag(text: string, startingIndex: number) {
     } // We've found our '<' open tag
 
     const nextCharCode = text.charCodeAt(needle + 1);
-    const isOpenTag = isCharCodeLetter(nextCharCode);
+    const isOpenTag = isCharCodeValidTagName(nextCharCode);
     const isCloseTag = nextCharCode === CharCodeForwardSlash;
 
     if (isOpenTag || isCloseTag) {
@@ -100,7 +103,7 @@ function indexOfNextOpenTag(text: string, startingIndex: number) {
     } // We've found our '<' open tag
 
     const nextCharCode = text.charCodeAt(needle + 1);
-    const isOpenTag = isCharCodeLetter(nextCharCode);
+    const isOpenTag = isCharCodeValidTagName(nextCharCode);
 
     if (isOpenTag) {
       return needle;
@@ -146,7 +149,7 @@ function readNextLetters(text: string, startingIndex: number) {
   for (let needle = startingIndex; needle < text.length; needle++) {
     let charCode = text.charCodeAt(needle);
 
-    if (!isCharCodeLetter(charCode)) {
+    if (!isCharCodeValidTagName(charCode)) {
       return {
         startingIndex,
         endingIndex: needle,
@@ -238,7 +241,7 @@ export function getNextXmlElement({
 
   let needle = postTagNameAndWhiteSpaceIndex;
   let isSelfClosingXmlElement;
-  while (isCharCodeLetter(xml.charCodeAt(needle))) {
+  while (isCharCodeValidTagName(xml.charCodeAt(needle))) {
     const { endingIndex: attributeNameEndingIndex, letters: attributeName } =
       readNextLetters(xml, needle);
     const afterAttributeNameEndingWhiteSpaceIdx = skipWhiteSpaceCharacters(
@@ -437,6 +440,8 @@ export function readXmlDocument(contents: string) {
     for (let needle = 0; needle < rawXmlElements.length; needle++) {
       const currentElement = rawXmlElements[needle];
       const nextElement = rawXmlElements[needle + 1];
+
+      currentElement.tag = camelize(currentElement.tag);
 
       if (currentElement.tag === "rest") {
         currentElement.type = "open-close";

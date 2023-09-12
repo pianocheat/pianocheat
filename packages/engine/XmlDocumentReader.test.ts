@@ -50,6 +50,18 @@ test(`getNextXmlElement() > should return tag with multiple attribute with coerc
   );
 });
 
+test(`getNextXmlElement() > should handle simple self-closing tag with dashes in name, no spaces`, (t) => {
+  t.like(
+    getNextXmlElement({
+      debug: false,
+      xml: `
+          <tag-name/>`,
+      startingIndex: 0,
+    }),
+    { tag: "tag-name" }
+  );
+});
+
 test(`getNextXmlElement() > should handle simple self-closing tag, no spaces`, (t) => {
   t.like(
     getNextXmlElement({
