@@ -1,10 +1,11 @@
-import { Button, Header } from "ui";
+"use client";
+
+import { Header, Logo } from "ui";
 
 export default function Page() {
   return (
     <>
-      <Header text="Docs" />
-      <Button />
+      <Header />
     </>
   );
 }

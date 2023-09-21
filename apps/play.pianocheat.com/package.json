@@ -9,10 +9,17 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@mantine/core": "^7.0.0",
+    "@mantine/dropzone": "^7.0.0",
+    "@mantine/hooks": "^7.0.0",
+    "@mantine/modals": "^7.0.0",
+    "@mantine/notifications": "^7.0.0",
+    "@mantine/spotlight": "^7.0.0",
+    "@tabler/icons-react": "^2.34.0",
+    "engine": "workspace:*",
     "next": "^13.4.19",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "engine": "workspace:*",
     "ui": "workspace:*"
   },
   "devDependencies": {
@@ -20,6 +27,9 @@
     "@types/react": "^18.2.21",
     "@types/react-dom": "^18.2.7",
     "eslint-config-custom": "workspace:*",
+    "postcss": "^8.4.30",
+    "postcss-preset-mantine": "^1.7.0",
+    "postcss-simple-vars": "^7.0.1",
     "tsconfig": "workspace:*",
     "typescript": "^5.2.2"
   }
