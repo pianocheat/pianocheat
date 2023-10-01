@@ -1,5 +1,5 @@
 {
-  "name": "engine",
+  "name": "scorebuilder",
   "engines": {
     "node": ">=20.0.0"
   },
@@ -18,8 +18,7 @@
   },
   "scripts": {
     "test.build": "rm -rf ./build && $(pnpm bin)/tsc --project ./tsconfig.test.json --watch",
-    "test.run": "ava ./build/DraftScoreBuilder.test.js --watch",
-    "lint": "eslint \"**/*.ts*\""
+    "test.run": "ava ./build/DraftScoreBuilder.test.js --watch"
   },
   "devDependencies": {
     "@ava/typescript": "^4.1.0",
@@ -27,8 +26,6 @@
     "@types/node": "^20.5.9",
     "@types/require-dir": "^1.0.2",
     "ava": "^5.3.1",
-    "eslint": "^8.48.0",
-    "eslint-config-custom": "workspace:*",
     "glob": "^10.3.4",
     "nodemon": "^3.0.1",
     "require-dir": "^1.2.0",

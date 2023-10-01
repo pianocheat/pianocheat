@@ -20,9 +20,11 @@ export type RepeatEvent = {
 export type NoteEvent = {
   event: "note";
   pitch?: number;
+  pitchStr?: string;
   rest?: boolean;
   grace?: boolean;
   chord?: boolean;
+  timecode?: number;
   cue?: boolean;
   step?: string;
   alter?: number;
@@ -30,6 +32,8 @@ export type NoteEvent = {
   duration: number;
   staff: number;
   accidental?: string;
+  tied?: boolean;
+  tiedType?: "start" | "stop" | "continue";
   timeModification?: boolean;
   arpeggiate?: boolean;
   measure: number;
@@ -54,14 +58,149 @@ export function readMusicXmlDocument(contents: string) {
   let scoreEvents = createDraftScoreEventsFromMusicXmlDocument(contents);
   convertNoteStepAlterOctavesToPitchNumbers(scoreEvents);
   const eventsMap = processAndRemoveBackupForwardScoreEvents(scoreEvents);
+  adjustTiedStartNoteDurations(eventsMap);
+  removeTiedStopAndContinueNotesAndTiedStartAttributes(eventsMap);
   removeRestNotes(eventsMap);
+  removeEmptyMeasures(eventsMap);
+  removeChordAttribute(eventsMap);
+  sortNotesInMeasure(eventsMap);
   return eventsMap;
+}
+
+export function adjustTiedStartNoteDurations(
+  eventsMap: Record<string, NoteEvent[]>
+) {
+  const notesToAdjust: any = {};
+
+  for (const timecode of Object.keys(eventsMap)) {
+    const notes = eventsMap[timecode];
+
+    for (let idx = 0; idx < notes.length; idx++) {
+      const note = notes[idx];
+
+      if (!note.tied) {
+        continue;
+      }
+
+      const keyPath = `${note.staff}/${note.pitch}`;
+      if (note.tiedType === "start") {
+        // Mark and remember any "start" tied note, we will be adjusting its duration
+        notesToAdjust[keyPath] = {
+          idx,
+          timecode: note.timecode,
+          staff: note.staff,
+          pitch: note.pitch,
+        };
+      } else {
+        // Found a "stop" or "continue" tied note
+
+        // Find its original "start" note and adjust its duration
+        const noteAdjustmentInfo = notesToAdjust[keyPath];
+        const {
+          idx: noteToBeAdjustedIdx,
+          timecode,
+          staff,
+          pitch,
+        } = noteAdjustmentInfo as any;
+        const foundNoteToBeAdjusted = eventsMap[timecode][noteToBeAdjustedIdx];
+
+        if (!foundNoteToBeAdjusted) {
+          throw new Error(
+            "Could not find tied note to increase duration of based on index calculated when iterating over notes earlier."
+          );
+        }
+
+        const isSameNote =
+          foundNoteToBeAdjusted.staff === staff &&
+          foundNoteToBeAdjusted.pitch === pitch;
+
+        if (!isSameNote) {
+          throw new Error(
+            "Adjusting tied note in notes data did not match cached info of tied notes built up when iterating over notes earlier."
+          );
+        }
+
+        foundNoteToBeAdjusted.duration += note.duration;
+
+        // If it's a "stop" tied note, clear the remembered start note to make room for the next tied note later in the song
+        if (note.tiedType === "stop") {
+          delete notesToAdjust[keyPath];
+        }
+      }
+    }
+  }
+
+  for (const noteToAdjust of Object.values(notesToAdjust)) {
+    const { idx, timecode, duration, staff, pitch } = noteToAdjust as any;
+    const foundNoteToBeAdjusted = eventsMap[timecode][idx];
+
+    if (!foundNoteToBeAdjusted) {
+      throw new Error(
+        "Could not find tied note to increase duration of based on index calculated when iterating over notes earlier."
+      );
+    }
+
+    const isSameNote =
+      foundNoteToBeAdjusted.staff === staff &&
+      foundNoteToBeAdjusted.pitch === pitch;
+
+    if (!isSameNote) {
+      throw new Error(
+        "Adjusting tied note in notes data did not match cached info of tied notes built up when iterating over notes earlier."
+      );
+    }
+
+    foundNoteToBeAdjusted.duration = duration;
+  }
+}
+
+export function removeTiedStopAndContinueNotesAndTiedStartAttributes(
+  eventsMap: Record<string, NoteEvent[]>
+) {
+  for (const timecode of Object.keys(eventsMap)) {
+    const notes = eventsMap[timecode];
+    eventsMap[timecode] = notes.filter((x) => {
+      if (!x.tiedType) {
+        return true;
+      } else if (x.tiedType === "start") {
+        delete x.tied;
+        delete x.tiedType;
+        return true;
+      }
+    });
+  }
 }
 
 export function removeRestNotes(eventsMap: Record<string, NoteEvent[]>) {
   for (const timecode of Object.keys(eventsMap)) {
     const notes = eventsMap[timecode];
     eventsMap[timecode] = notes.filter((x) => !x.rest);
+  }
+}
+
+export function removeEmptyMeasures(eventsMap: Record<string, NoteEvent[]>) {
+  for (const timecode of Object.keys(eventsMap)) {
+    const notes = eventsMap[timecode];
+    if (!notes.length) {
+      delete eventsMap[timecode];
+    }
+  }
+}
+
+export function removeChordAttribute(eventsMap: Record<string, NoteEvent[]>) {
+  for (const notes of Object.values(eventsMap)) {
+    for (const note of notes) {
+      delete note.chord;
+    }
+  }
+}
+
+export function sortNotesInMeasure(eventsMap: Record<string, NoteEvent[]>) {
+  for (const timecode of Object.keys(eventsMap)) {
+    const notes = eventsMap[timecode];
+    eventsMap[timecode] = notes.sort(
+      (a, b) => (b?.pitch || 0) - (a?.pitch || 0)
+    );
   }
 }
 
@@ -89,6 +228,11 @@ export function convertNoteStepAlterOctavesToPitchNumbers(
         );
       } else {
         entry.pitch = MusicXmlPitchToNumber({
+          step: step as MusicXmlPitchStep,
+          alter,
+          octave,
+        });
+        entry.pitchStr = MusicXmlPitchToString({
           step: step as MusicXmlPitchStep,
           alter,
           octave,
@@ -146,7 +290,7 @@ export function processAndRemoveBackupForwardScoreEvents(
     note: NoteEvent;
   }) {
     if (note.staff == null) {
-      throw new Error("Note staff cannot be null.");
+      // Single-staff music may not have a staff property
       note.staff = 1;
     }
 
@@ -172,6 +316,7 @@ export function processAndRemoveBackupForwardScoreEvents(
     if (note.cue) {
       return;
     }
+    note.timecode = clock;
 
     eventsMap[clock] ||= [];
     const notes = eventsMap[clock];
@@ -240,6 +385,7 @@ export function createDraftScoreEventsFromMusicXmlDocument(contents: string) {
         )
       );
       xmlElementsForMeasure.length = 0;
+      measureNumber += 1;
     } else {
       xmlElementsForMeasure.push(element);
     }
@@ -248,26 +394,88 @@ export function createDraftScoreEventsFromMusicXmlDocument(contents: string) {
   return scoreEvents;
 }
 
-const IGNORED_MUSICXML_ELEMENTS = new Set([
-  "pitch",
-  "accent",
-  "appearance",
-  "beam",
-  "stem",
-  "voice",
-  "tuplet",
+const IGNORED_NOTE_KEYS_STARTS_WITH = [
+  "tieT", // tieType & tieTimeOnly
+  "stacca", // staccato & staccatissimo
+  "fermata",
+  "fingering",
   "slur",
-  "type",
-  "accidental",
-  "tenuto",
-  "timeModification",
-  "actualNotes",
-  "normalNotes",
-  "staccato",
-  "articulations",
-  "ornaments",
-  "notations",
-]);
+  "beam",
+  "strongAccent",
+  "tuplet",
+];
+
+const IGNORED_NOTE_KEYS_STARTS_WITH_AFTER = ["wavyLine", "grace"];
+
+const IGNORED_NOTE_KEYS_EXACT_MATCH = new Set(
+  [
+    // The <tie> element indicates sound; the <tied> element indicates notation
+    ["tie"],
+    // We are only interested in the specific notations or ornaments, not that there are any
+    ["notations", "ornaments"],
+    // Which hand plays a note is determined by the staff (treble or bass cleff), not by the voice
+    ["voice"],
+    ["dot"],
+    ["stem"],
+    ["type"],
+    ["technical"],
+    ["articulations"],
+    ["timeModification", "actualNotes", "normalNotes"],
+    ["accidental"],
+    ["accent"],
+  ].flat()
+);
+
+function getNoteWithTransformedProperties(note: any) {
+  if (
+    Array.isArray(note.tiedType) &&
+    note.tiedType.length > 1 &&
+    (note.tiedType[0] === "start" || note.tiedType[0] === "stop") &&
+    (note.tiedType[1] === "start" || note.tiedType[1] === "stop") &&
+    note.tiedType[0] !== note.tiedType[1]
+  ) {
+    note.tiedType = "continue";
+  }
+
+  if (note.trillMark || note.wavyLine) {
+    delete note.trillMark;
+    delete note.wavyLine;
+    note.trill = true;
+  }
+
+  return note;
+}
+
+function getNoteWithoutIgnoredProperties(note: any) {
+  const newNote: any = {};
+  for (const key of Object.keys(note)) {
+    let isKeyBlacklisted = false;
+    if (IGNORED_NOTE_KEYS_EXACT_MATCH.has(key)) {
+      isKeyBlacklisted = true;
+    } else {
+      for (const ignoredKeyStartsWithAfter of IGNORED_NOTE_KEYS_STARTS_WITH_AFTER) {
+        if (
+          key !== ignoredKeyStartsWithAfter &&
+          key.startsWith(ignoredKeyStartsWithAfter)
+        ) {
+          isKeyBlacklisted = true;
+          break;
+        }
+      }
+      for (const ignoredKeyStartsWith of IGNORED_NOTE_KEYS_STARTS_WITH) {
+        if (key.startsWith(ignoredKeyStartsWith)) {
+          isKeyBlacklisted = true;
+          break;
+        }
+      }
+    }
+
+    if (!isKeyBlacklisted) {
+      newNote[key] = note[key];
+    }
+  }
+  return newNote;
+}
 
 export function createDraftScoreEventsFromMeasureXml(
   elements: PreProcessedXmlReaderElement[],
@@ -304,14 +512,24 @@ export function createDraftScoreEventsFromMeasureXml(
             continue;
           }
 
-          if (!IGNORED_MUSICXML_ELEMENTS.has(nextElement.tag)) {
-            noteData[nextElement.tag] =
-              nextElement.value != null ? nextElement.value : true;
-            for (const [key, value] of Object.entries(
-              nextElement.attributes || {}
-            )) {
-              noteData[`${nextElement.tag}${upperCaseFirstLetter(key)}`] =
-                Number.isNaN(Number(value)) ? value : Number(value);
+          noteData[nextElement.tag] =
+            nextElement.value != null ? nextElement.value : true;
+          for (const [key, value] of Object.entries(
+            nextElement.attributes || {}
+          )) {
+            const keyPath = `${nextElement.tag}${upperCaseFirstLetter(key)}`;
+            const existingValue = noteData[keyPath];
+            const entryAddition = Number.isNaN(Number(value))
+              ? value
+              : Number(value);
+
+            if (existingValue) {
+              if (!Array.isArray(existingValue)) {
+                noteData[keyPath] = [existingValue];
+              }
+              noteData[keyPath].push(entryAddition);
+            } else {
+              noteData[keyPath] = entryAddition;
             }
           }
 
@@ -319,6 +537,9 @@ export function createDraftScoreEventsFromMeasureXml(
         } while (subIndex < elements.length);
 
         index = subIndex;
+
+        noteData = getNoteWithoutIgnoredProperties(noteData);
+        noteData = getNoteWithTransformedProperties(noteData);
         events.push({ event: "note", measure, ...noteData });
         break;
       case "forward":

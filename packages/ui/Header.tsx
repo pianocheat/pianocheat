@@ -36,7 +36,7 @@ export function Header() {
               radius="lg"
               leftSection={<IconPlugConnected size="0.9rem" stroke={1.5} />}
             >
-              Kawai VPC
+              Digital Piano
             </Badge>
           </Group>
           <Burger opened={opened} onClick={toggle} size="sm" hiddenFrom="sm" />

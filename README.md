@@ -1,64 +1,34 @@
 # PianoCheat
 
-## Features & Notes
+If you have a piano keyboard and want to play songs without learning the notes, PianoCheat allows you to easily play songs by pressing any wrong keys.
 
--
-
-## Architecture
-
-- Input file support: MusicXML documents
-
-### Pipeline
-
-1. When a MusicXML document is provided, 
+PianoCheat uses the Web MIDI API to connect to your piano keyboard and uses sheet music data from MusicXML files to know how to correct wrong notes you play. As the piano player, you still control the dynamics, rhythm, and pedaling of a song.
 
 ## Development
 
-This Turborepo includes the following packages/apps:
+This repository includes the following packages/apps:
 
-### Apps and Packages
+### Layout
 
-- `website`: the [Next.js](https://nextjs.org/) app for pianocheat.com
-- `app`: the Electron-based desktop app
-- `ui`: a stub React component library shared by both `web` and `docs` applications
-- `eslint-config-custom`: `eslint` configurations (includes `eslint-config-next` and `eslint-config-prettier`)
-- `tsconfig`: `tsconfig.json`s used throughout the monorepo
-
-Each package/app is 100% [TypeScript](https://www.typescriptlang.org/).
-
-### Utilities
-
-This Turborepo has some additional tools already setup for you:
-
-- [TypeScript](https://www.typescriptlang.org/) for static type checking
-- [ESLint](https://eslint.org/) for code linting
-- [Prettier](https://prettier.io) for code formatting
-
-### Build
-
-To build all apps and packages, run the following command:
-
-```
-cd my-turborepo
-pnpm build
-```
+- `apps/www.pianocheat.com`: the home landing page for pianocheat.com
+- `apps/play.pianocheat.com`: the piano playing page for pianocheat.com
+- `packages/ui`: various shared UI components
+- `packages/tsconfig`: TypeScript configuration files used throughout the repository
 
 ### Develop
 
-To develop all apps and packages, run the following command:
+To run the website for pianocheat.com and play.pianocheat.com, run the following command:
 
 ```
-cd my-turborepo
 pnpm dev
 ```
 
-## Useful Links
+This will automatically build any related packages each app depends on.
 
-Learn more about the power of Turborepo:
+### Build
 
-- [Tasks](https://turbo.build/repo/docs/core-concepts/monorepos/running-tasks)
-- [Caching](https://turbo.build/repo/docs/core-concepts/caching)
-- [Remote Caching](https://turbo.build/repo/docs/core-concepts/remote-caching)
-- [Filtering](https://turbo.build/repo/docs/core-concepts/monorepos/filtering)
-- [Configuration Options](https://turbo.build/repo/docs/reference/configuration)
-- [CLI Usage](https://turbo.build/repo/docs/reference/command-line-reference)
+To build a production release for the website for pianocheat.com and play.pianocheat.com, run the following command:
+
+```
+pnpm build
+```

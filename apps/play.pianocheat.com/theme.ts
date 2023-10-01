@@ -12,8 +12,10 @@ const myColor: MantineColorsTuple = [
   "#2da96a",
   "#1b9359",
 ];
-// Color Palette
+
+// Note: A beautiful color palette
 // ["3b5496","4c86bf","1f2375","294582","96c4e0"]
+
 export const theme = createTheme({
   colors: {
     myColor,

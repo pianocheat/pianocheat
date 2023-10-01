@@ -1,7 +1,51 @@
-import { Pitch } from "../parser/interfaces.js";
-import { PlayerMapping } from "./interfaces.js";
+export function withNormalizedWhitespace(text: string) {
+  return text
+    .replace(/\r|\n/g, "")
+    .replace(/ +/g, " ")
+    .replace(/\> +\</g, "><")
+    .trim();
+}
 
-export function ToPitch(s: string): number {
+export function upperCaseFirstLetter(text: string) {
+  return `${text[0].toUpperCase()}${text.slice(1)}`;
+}
+
+export function camelize(str: string) {
+  return str.replace(/^([A-Z])|[\s-_](\w)/g, function (match, p1, p2, offset) {
+    if (p2) return p2.toUpperCase();
+    return p1.toLowerCase();
+  });
+}
+
+/**
+ * 	Pitch is represented as a combination of the step of the diatonic scale, the chromatic alteration, and the octave.
+ */
+export interface MusicXmlPitch {
+  step: MusicXmlPitchStep;
+  /**
+   * The alter element represents chromatic alteration in number of semitones (e.g., -1 for flat, 1 for sharp). Decimal values like 0.5 (quarter tone sharp) are used for microtones. The octave element is represented by the numbers 0 to 9, where 4 indicates the octave started by middle C.  In the first example below, notice an accidental element is used for the third note, rather than the alter element, because the pitch is not altered from the the pitch designated to that staff position by the key signature.
+   */
+  alter?: number;
+  /**
+   * Octaves are represented by the numbers 0 to 9, where 4 indicates the octave started by middle C.
+   */
+  octave: number;
+}
+
+/**
+ * 	The step type represents a step of the diatonic scale, represented using the English letters A through G.
+ */
+export enum MusicXmlPitchStep {
+  A = "A",
+  B = "B",
+  C = "C",
+  D = "D",
+  E = "E",
+  F = "F",
+  G = "G",
+}
+
+export function PitchStringToNumber(s: string): number {
   const OCTAVE_SEMITONES: number = 12;
   const C0_VALUE: number = 12; /* MIDI defines C0 as 12 */
   const octave: number = parseFloat(s[s.length - 1]);
@@ -51,12 +95,14 @@ export function ToPitch(s: string): number {
   );
 }
 
-export function PitchToStr(pitch: Pitch): string {
+export function MusicXmlPitchToString(pitch: MusicXmlPitch): string {
   const { step, alter, octave } = pitch;
-  return `${step}${alter === -1 ? "b" : alter === 1 ? "#" : ""}${octave}`;
+  return `${step.toLowerCase()}${
+    alter === -1 ? "♭" : alter === 1 ? "♯" : ""
+  }${octave}`;
 }
 
-export function PitchToByte(pitch: Pitch): number {
+export function MusicXmlPitchToNumber(pitch: MusicXmlPitch): number {
   if (!pitch || !pitch.step) {
     throw new Error("No pitch or step found, cannot convert.");
   }
@@ -100,15 +146,4 @@ export function PitchToByte(pitch: Pitch): number {
     alter != null && alter !== 0 ? Math.floor(alter) : 0;
 
   return valueForOctave + stepSemitone + alterSemitone;
-}
-
-export function getKeyedPlayerMappings(
-  playerMappings: PlayerMapping[]
-): Record<string, PlayerMapping> {
-  const record: Record<string, PlayerMapping> = {};
-  for (const entry of playerMappings) {
-    record[`part/${entry.part.number}/staff/${entry.staff}`] = entry;
-    record[`part/${entry.part.name}/staff/${entry.staff}`] = entry;
-  }
-  return record;
 }

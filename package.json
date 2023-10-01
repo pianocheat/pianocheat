@@ -4,17 +4,12 @@
     "node": ">=20.0.0"
   },
   "scripts": {
-    "build": "turbo run build",
-    "dev": "turbo run dev",
-    "lint": "turbo run lint",
+    "dev": "pnpm --filter=./apps/** run dev",
+    "dev:packages": "pnpm -r --parallel --filter=./packages/** run dev --watch",
     "format": "prettier --write \"**/*.{ts,tsx,md}\""
   },
   "devDependencies": {
-    "@turbo/gen": "^1.10.13",
-    "eslint": "^8.48.0",
-    "eslint-config-custom": "workspace:*",
-    "prettier": "^3.0.3",
-    "turbo": "latest"
+    "prettier": "^3.0.3"
   },
   "packageManager": "pnpm@8.6.10",
   "name": "pianocheat"
