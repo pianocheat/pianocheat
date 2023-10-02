@@ -1,11 +1,11 @@
 {
-  "name": "scorebuilder",
+  "name": "score",
   "engines": {
     "node": ">=20.0.0"
   },
   "version": "0.0.0",
   "exports": "./build/index.js",
-  "types": "./build/index.d.ts",
+  "types": "./build/index.ts",
   "type": "module",
   "license": "MIT",
   "ava": {
@@ -29,6 +29,7 @@
     "glob": "^10.3.10",
     "nodemon": "^3.0.1",
     "require-dir": "^1.2.0",
+    "scorebuilder": "workspace:*",
     "tsconfig": "workspace:*",
     "typescript": "~5.2.2"
   },
@@ -37,6 +38,7 @@
     "fast-deep-equal": "^3.1.3",
     "humps": "^2.0.1",
     "memfs": "^4.5.0",
+    "scorebuilder": "workspace:*",
     "txml": "^5.1.1"
   }
 }
