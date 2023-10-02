@@ -1,5 +1,5 @@
 {
-  "name": "score",
+  "name": "playback",
   "engines": {
     "node": ">=20.0.0"
   },
@@ -17,7 +17,5 @@
     "tsconfig": "workspace:*",
     "typescript": "~5.2.2"
   },
-  "dependencies": {
-    "scorebuilder": "workspace:*"
-  }
+  "dependencies": {}
 }

@@ -1,5 +1,9 @@
 {
   "extends": "tsconfig/module-library.json",
-  "include": ["."],
-  "exclude": ["dist", "build", "node_modules"]
+  "include": ["**/*.ts", "**/*.tsx"],
+  "exclude": ["node_modules", "build"],
+  "compilerOptions": {
+    "rootDir": "./",
+    "outDir": "build"
+  }
 }

@@ -17,8 +17,9 @@
     }
   },
   "scripts": {
-    "dev": "rm -rf ./build && $(pnpm bin)/tsc --project ./tsconfig.test.json --watch",
-    "test": "ava ./build/DraftScoreBuilder.test.js --watch"
+    "dev": "$(pnpm bin)/tsc --watch",
+    "clean": "rm -rf ./build",
+    "test": "ava ./build/*.test.js --watch"
   },
   "devDependencies": {
     "@ava/typescript": "^4.1.0",

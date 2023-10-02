@@ -4,8 +4,9 @@
     "node": ">=20.0.0"
   },
   "scripts": {
-    "dev": "pnpm --filter=./apps/** run dev",
-    "dev:packages": "pnpm -r --parallel --filter=./packages/** run dev --watch",
+    "clean": "pnpm --filter=./** run clean",
+    "dev:apps": "pnpm --filter=./apps/** run dev",
+    "dev:packages": "pnpm -r --parallel --filter=./packages/** run dev",
     "format": "prettier --write \"**/*.{ts,tsx,md}\""
   },
   "devDependencies": {
